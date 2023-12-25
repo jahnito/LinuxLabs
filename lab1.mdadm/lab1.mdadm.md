@@ -9,7 +9,9 @@
 
 Через утилиту **lsblk**
 
-```jahn@debian:~$ lsblk 
+<font color="green">jahn@debian:~$</font> **<font color="blue">lsblk</font>**
+```
+
 NAME           MAJ:MIN RM  SIZE RO TYPE  MOUNTPOINTS
 sda              8:0    0    8G  0 disk  
 └─sda1           8:1    0    8G  0 part  
@@ -29,8 +31,10 @@ nvme0n2        259:1    0    2G  0 disk
 
 Через утилиту **fdisk**
 
+
+<font color="green">jahn@debian:~$</font> **<font color="blue">sudo fdisk -l</font>**
+
 ```
-jahn@debian:~$ sudo fdisk -l
 [sudo] password for jahn: 
 Disk /dev/nvme0n1: 2 GiB, 2147483648 bytes, 4194304 sectors
 Disk model: ORCL-VBOX-NVME-VER12                    
@@ -64,17 +68,18 @@ Device     Boot Start      End  Sectors Size Id Type
 
 Производим зануление суперблоков на дисках
 
+
+<font color="green">jahn@debian:~$</font> **<font color="blue">sudo mdadm --zero-superblock --force /dev/nvme0n{1,2}</font>**
+
 ```
-jahn@debian:~$ sudo mdadm --zero-superblock --force /dev/nvme0n{1,2}
 mdadm: Unrecognised md component device - /dev/nvme0n1
 mdadm: Unrecognised md component device - /dev/nvme0n2
 ```
 
-такой вывод сообщает об отсутствии ранее созданных массивов, далее удаляем старые метаданные и сигнатуры
+такой вывод сообщает об отсутствии ранее созданных массивов, далее зачищаем метаданные и сигнатуры, которые могут находиться на дисках и идентифицировать диски как логические устройства:
 
-```
-sudo wipefs --all --force /dev/nvme0n{1,2}
-```
+<font color="green">jahn@debian:~$</font> **<font color="blue">sudo wipefs --all --force /dev/nvme0n{1,2}</font>**
+
 
 ### Создание массива
 
@@ -87,9 +92,10 @@ sudo wipefs --all --force /dev/nvme0n{1,2}
 
 Дополнительные опции доступны для просмотра в **man mdadm**
 
-```
-jahn@debian:~$ sudo mdadm --create /dev/md1 --verbose --level=0 --raid-devices=2 /dev/nvme0n1 /dev/nvme0n2
 
+<font color="green">jahn@debian:~$</font> **<font color="blue">sudo mdadm --create /dev/md1 --verbose --level=0 --raid-devices=2 /dev/nvme0n1 /dev/nvme0n2</font>**
+
+```
 mdadm: chunk size defaults to 512K
 mdadm: Defaulting to version 1.2 metadata
 mdadm: array /dev/md1 started.
@@ -97,8 +103,9 @@ mdadm: array /dev/md1 started.
 
 Т.к. в приведенной системе система изначально установлена на массив md0, новый массив получило имя md1. После создания проверяем наличие массива.
 
+<font color="green">jahn@debian:~$</font> **<font color="blue">lsblk</font>**
+
 ```
-jahn@debian:~$ lsblk 
 NAME           MAJ:MIN RM  SIZE RO TYPE  MOUNTPOINTS
 sda              8:0    0    8G  0 disk  
 └─sda1           8:1    0    8G  0 part  
@@ -120,8 +127,9 @@ nvme0n2        259:1    0    2G  0 disk
 
 Ёмкость массива стала 4Gb. Смотрим состояние массива.
 
+<font color="green">jahn@debian:~$</font> **<font color="blue">cat /proc/mdstat</font>**
+
 ```
-jahn@debian:~$ cat /proc/mdstat 
 Personalities : [raid1] [linear] [multipath] [raid0] [raid6] [raid5] [raid4] [raid10] 
 md1 : active raid0 nvme0n2[1] nvme0n1[0]
       4188160 blocks super 1.2 512k chunks
@@ -134,8 +142,9 @@ unused devices: <none>
 
 Смотрим детальную информацию о массиве
 
+<font color="green">jahn@debian:~$</font> **<font color="blue">sudo mdadm --detail /dev/md1</font>**
+
 ```
-jahn@debian:~$ sudo mdadm --detail /dev/md1
 /dev/md1:
            Version : 1.2
      Creation Time : Fri Dec 22 02:22:36 2023
@@ -191,15 +200,14 @@ Consistency Policy : none
 Так как по молчанию конфигурация массива никуда не сохраняется, потребуется её сохранить в конфигурационный файл mdadm.conf
 Переходим в режим суперпользователя, т.к. потребуется полный доступ к командам доступным администратору и сохранению вывода в конфиггурацию системы
 
-```
-jahn@debian:~$ sudo -i
-root@debian:~# mdadm --detail --scan --verbose | awk '/ARRAY/ {print}' >> /etc/mdadm/mdadm.conf
-```
+<font color="green">jahn@debian:~$</font> <font color="blue">sudo -i</font>
+<font color="red">root@debian:~#</font> <font color="blue">mdadm --detail --scan --verbose | awk '/ARRAY/ {print}' >> /etc/mdadm/mdadm.conf</font>
 
 Для того чтобы имена массивов сохранялись при загрузке системы, обновляем образ начальной закрузки.
 
+<font color="green">jahn@debian:~$</font> **<font color="blue">sudo update-initramfs -u</font>**
+
 ```
-jahn@debian:~$ sudo update-initramfs -u 
 update-initramfs: Generating /boot/initrd.img-6.1.0-12-amd64
 ```
 
@@ -208,12 +216,13 @@ update-initramfs: Generating /boot/initrd.img-6.1.0-12-amd64
 Помечаем массив как GPT
 Создаем 1 раздел, на весь объём массива.
 
-```
-sudo fdisk /dev/md1 - через интерактивное меню выполняем необходимые действия
-```
+
+<font color="green">jahn@debian:~$</font> **<font color="blue">sudo fdisk /dev/md1</font>** # через интерактивное меню выполняем необходимые действия
+
+
+<font color="green">jahn@debian:~$</font> **<font color="blue">lsblk</font>**
 
 ```
-jahn@debian:~$ lsblk 
 NAME           MAJ:MIN RM  SIZE RO TYPE  MOUNTPOINTS
 sda              8:0    0    8G  0 disk  
 └─sda1           8:1    0    8G  0 part  
@@ -237,8 +246,9 @@ nvme0n2        259:1    0    2G  0 disk
 
 Раздел создан, создаём файловую систему
 
+<font color="green">jahn@debian:~$</font> **<font color="blue">sudo mkfs.ext4 /dev/md1p1</font>**
+
 ```
-jahn@debian:~$ sudo mkfs.ext4 /dev/md1p1 
 mke2fs 1.47.0 (5-Feb-2023)
 Creating filesystem with 1046528 4k blocks and 261632 inodes
 Filesystem UUID: 1920e290-3307-4fbb-b86d-bce539f2eca7
@@ -253,25 +263,27 @@ Writing superblocks and filesystem accounting information: done
 
 Монтируем раздел в каталог mnt 
 
+<font color="green">jahn@debian:~$</font> **<font color="blue">sudo mount /dev/md1p1 /mnt/</font>**
+
+<font color="green">jahn@debian:~$</font> **<font color="blue">mount</font>**
+
 ```
-jahn@debian:~$ sudo mount /dev/md1p1 /mnt/
-jahn@debian:~$ mount
 ....
 /dev/md1p1 on /mnt type ext4 (rw,relatime,stripe=256)
 ```
 
 Записываем тестовый файл на диск 
 
+<font color="green">jahn@debian:~$</font> **<font color="blue">sudo dd if=/dev/urandom of=/mnt/test_data bs=4M count=512 status=progress</font>**
 ```
-jahn@debian:~$ sudo dd if=/dev/urandom of=/mnt/test_data bs=4M count=512 status=progress 
 2046820352 bytes (2.0 GB, 1.9 GiB) copied, 16 s, 128 MB/s
 512+0 records in
 512+0 records out
 2147483648 bytes (2.1 GB, 2.0 GiB) copied, 16.6377 s, 129 MB/s
 ```
 
+<font color="green">jahn@debian:~$</font> **<font color="blue">ls -lh /mnt/</font>**
 ```
-jahn@debian:~$ ls -lh /mnt/
 total 2.1G
 drwx------ 2 root root  16K Dec 22 02:56 lost+found
 -rw-r--r-- 1 root root 2.0G Dec 22 03:00 test_data
@@ -281,17 +293,16 @@ drwx------ 2 root root  16K Dec 22 02:56 lost+found
 
 Останавливаем массив
 
+<font color="green">jahn@debian:~$</font> **<font color="blue">sudo mdadm --stop /dev/md1</font>**
 ```
-jahn@debian:~$ sudo mdadm --stop /dev/md1
-[sudo] password for jahn: 
 mdadm: stopped /dev/md1
 ```
 
 Очищаем суперблоки и обновляем конфигурацию массива в образе
-```
-sudo mdadm --zero-superblock /dev/nvme0n{1,2}
-sudo update-initramfs -u
-```
+
+<font color="green">jahn@debian:~$</font> **<font color="blue">sudo mdadm --zero-superblock /dev/nvme0n{1,2}</font>**
+
+<font color="green">jahn@debian:~$</font> **<font color="blue">sudo update-initramfs -u</font>**
 
 ## 2. **RAID1**
 
@@ -331,6 +342,7 @@ sudo mdadm /dev/md1 --fail /dev/nvme0n1
 # Проверяем состояние массива
 sudo mdadm --detail /dev/md1
 ```
+
 Находим следующую информацию State : clean, **degraded**
 
 Перезаписываем файл, чистим сбойный диск, удаляем из массива
@@ -381,7 +393,7 @@ sudo update-initramfs -u
 sudo apt install tmux
 ```
 
-### Начинаем работу по созданию массива
+### Cоздание массива
 ```
 lsblk
 sudo mdadm --zero-superblock --force /dev/nvme0n{1,2,3,4}
@@ -399,7 +411,7 @@ ctrl + b -> shift + '   # создаём второе окно
 ctrl + b -> up_arrow    #
 ```
 
-Создаём файловую систему и монтируем
+### Создание файловой системы и тестирование работы массива
 
 ```
 ctrl + b -> down_arrow
@@ -421,9 +433,127 @@ sudo mdadm /dev/md1 --add /dev/nvme0n2 && watch cat /proc/mdstat #
 
 В ходе восстановления скорость записи на массив может снизиться в связи с синхронизацией всех дисков.
 
+### Добавление горячей замены
+
+Выключаем систему и добавляем дополнительный диск.
+
+```
+sudo mdadm /dev/md127 --add /dev/nvme0n5
+sudo mdadm --detail /dev/md127
+```
+
+В выводе 
+
+```
+/dev/md127:
+           Version : 1.2
+     Creation Time : Sun Dec 24 00:28:56 2023
+        Raid Level : raid5
+        Array Size : 6282240 (5.99 GiB 6.43 GB)
+     Used Dev Size : 2094080 (2045.00 MiB 2144.34 MB)
+      Raid Devices : 4
+     Total Devices : 5
+       Persistence : Superblock is persistent
+
+       Update Time : Sun Dec 24 07:12:47 2023
+             State : clean 
+    Active Devices : 4
+   Working Devices : 5
+    Failed Devices : 0
+     Spare Devices : 1
+
+            Layout : left-symmetric
+        Chunk Size : 512K
+
+Consistency Policy : resync
+
+              Name : debian:1  (local to host debian)
+              UUID : 27624b97:30209b48:2243952d:c055e723
+            Events : 244
+
+    Number   Major   Minor   RaidDevice State
+       0     259        0        0      active sync   /dev/nvme0n1
+       5     259        1        1      active sync   /dev/nvme0n2
+       2     259        2        2      active sync   /dev/nvme0n3
+       4     259        3        3      active sync   /dev/nvme0n4
+
+       6     259        4        -      spare   /dev/nvme0n5
+```
+
+Интересующие данные:
+
++ Active Devices : 4
++ Working Devices : 5
++ 6     259        4        -      spare   /dev/nvme0n5
+
+Как в предыдущем примере помечаем один диск сбойным и начинаем мониторить состояние массива:
+
+```
+sudo mdadm /dev/md1 --fail /dev/nvme0n2 && watch cat /proc/mdstat
+```
+
+Наблюдаем синхрнизацию массива
+
+```
+Every 2.0s: cat /proc/mdstat                                                      debian: Sun Dec 24 08:47:02 2023
+
+Personalities : [raid1] [raid6] [raid5] [raid4] [linear] [multipath] [raid0] [raid10]
+md0 : active raid1 sdb1[1] sda1[0]
+      8381440 blocks super 1.2 [2/2] [UU]
+
+md127 : active raid5 nvme0n5[6] nvme0n1[0] nvme0n3[2] nvme0n4[4] nvme0n2[5](F)
+      6282240 blocks super 1.2 level 5, 512k chunk, algorithm 2 [4/3] [U_UU]
+      [==========>..........]  recovery = 50.6% (1061712/2094080) finish=0.2min speed=58984K/sec
+
+unused devices: <none>
+
+jahn@debian:~$ sudo mdadm --detail /dev/md127 
+/dev/md127:
+           Version : 1.2
+     Creation Time : Sun Dec 24 00:28:56 2023
+        Raid Level : raid5
+        Array Size : 6282240 (5.99 GiB 6.43 GB)
+     Used Dev Size : 2094080 (2045.00 MiB 2144.34 MB)
+      Raid Devices : 4
+     Total Devices : 5
+       Persistence : Superblock is persistent
+
+       Update Time : Sun Dec 24 08:47:16 2023
+             State : clean 
+    Active Devices : 4
+   Working Devices : 4
+    Failed Devices : 1
+     Spare Devices : 0
+
+            Layout : left-symmetric
+        Chunk Size : 512K
+
+Consistency Policy : resync
+
+              Name : debian:1  (local to host debian)
+              UUID : 27624b97:30209b48:2243952d:c055e723
+            Events : 263
+
+    Number   Major   Minor   RaidDevice State
+       0     259        0        0      active sync   /dev/nvme0n1
+       6     259        4        1      active sync   /dev/nvme0n5
+       2     259        2        2      active sync   /dev/nvme0n3
+       4     259        3        3      active sync   /dev/nvme0n4
+
+       5     259        1        -      faulty   /dev/nvme0n2
+```
+
+Запасной диск /dev/nvme0n5 встал в работу вместо /dev/nvme0n2.
+
+
+Для улучшения производительности массива исходя из его назначения( например: хранение больших объемов данных или наоборот файлов небольшого размера), былобы хорошим тоном создавать соответствующую файловую систему, т.к. логические блоки по умолчанию составляют 4 Кб, а данные рабросаны по дискам чанками.
+
+
+
 
 
 
 Источники:
 http://xgu.ru/wiki/mdadm
 https://www.dmosk.ru/miniinstruktions.php?mini=mdadm
+https://thelastmaimou.wordpress.com/2013/05/04/magic-soup-ext4-with-ssd-stripes-and-strides/
